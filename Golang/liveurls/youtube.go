@@ -13,6 +13,7 @@ import (
 	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ import (
 )
 
 var streamCachedMap sync.Map
+var proxyurl string
 
 type Youtube struct {
 	//https://www.youtube.com/watch?v=cK4LemjoFd0
@@ -33,13 +35,14 @@ func (y *Youtube) GetLiveUrl() any {
 	if cached, ok := get(y.Rid); ok {
 		return cached
 	}
-	//proxyUrl, err := url.Parse("http://127.0.0.1:8888")
+	proxyurl = "http://10.10.10.2:7890"
+	proxyUrl, err := url.Parse(proxyurl)
 	client := &http.Client{
 		Timeout: time.Second * 5,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		//Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)},
+		Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)},
 	}
 
 	json := []byte(fmt.Sprintf(`{"context": {"client": {"hl": "zh","clientVersion": "2.20201021.03.00","clientName": "WEB"}},"videoId": "%s"}`, y.Rid))
@@ -74,7 +77,9 @@ func (y *Youtube) GetLiveUrl() any {
 }
 
 func (y *Youtube) getResolution(liveurl string) *string {
-	client := &http.Client{Timeout: time.Second * 5}
+	proxyUrl, err := url.Parse(proxyurl)
+	client := &http.Client{Timeout: time.Second * 5,
+		Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	r, _ := http.NewRequest("GET", liveurl, nil)
 	r.Header.Add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36")
 	resp, err := client.Do(r)

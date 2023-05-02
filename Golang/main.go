@@ -9,11 +9,13 @@ package main
 
 import (
 	"Golang/liveurls"
-	"encoding/base64"
-	"github.com/forgoer/openssl"
 	"github.com/gin-gonic/gin"
+	"log"
+	"log/syslog"
 	"net/http"
 )
+
+var logger *log.Logger = log.Default()
 
 func duanyan(adurl string, realurl any) string {
 	var liveurl string
@@ -72,9 +74,17 @@ func setupRouter(adurl string) *gin.Engine {
 }
 
 func main() {
-	key := []byte("6354127897263145")
-	defstr, _ := base64.StdEncoding.DecodeString("Mf5ZVkSUHH5xC9fH2Sao+2LgjRfydmzMgHNrVYX4AcSoI0nktkV7z1jSU6nSihf7ny+PexV73YjDoEtG7qu+Cw==")
-	defurl, _ := openssl.AesECBDecrypt(defstr, key, openssl.PKCS7_PADDING)
-	r := setupRouter(string(defurl))
+	//key := []byte("6354127897263145")
+	//defstr, _ := base64.StdEncoding.DecodeString("Mf5ZVkSUHH5xC9fH2Sao+2LgjRfydmzMgHNrVYX4AcSoI0nktkV7z1jSU6nSihf7ny+PexV73YjDoEtG7qu+Cw==")
+	//defurl, _ := openssl.AesECBDecrypt(defstr, key, openssl.PKCS7_PADDING)
+	//sysLog, err := syslog.Dial("tcp", "localhost:1234",
+	//	syslog.LOG_WARNING|syslog.LOG_DAEMON, "gom3u8")
+	sysLog, err := syslog.New(syslog.LOG_SYSLOG|syslog.LOG_WARNING, "gom3u8")
+	if err != nil {
+		logger.Print("syslog is error.")
+	}
+	r := setupRouter(string("http://10.10.10.207:8123/local/test.m3u"))
+	logger.Print("run on 35455.")
+	sysLog.Info("listen on 35455...")
 	r.Run(":35455")
 }
